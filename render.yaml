@@ -1,14 +1,21 @@
 services:
   - type: web
-    name: Ernest_gazetteer
-    env: php
+    name: Ernest_gazetteer_app
+    env: php                # 👈 forces PHP runtime
     plan: free
-    buildCommand: ""
+    region: frankfurt
+    branch: main
+
+    buildCommand: ""        # no build step needed
     startCommand: "php -S 0.0.0.0:10000 -t ."
+
+    autoDeploy: true        # CI/CD on every push
+    pullRequestPreviewsEnabled: true
+
     envVars:
       - key: GEONAMES_USERNAME
-        value: ernestgeo
+        value: your_geonames_username
       - key: OPEN_CAGE_KEY
-        value: your_opencage_key
+        value: your_opencage_api_key
       - key: OPEN_WEATHER_KEY
-        value: your_openweather_key
+        value: your_openweather_api_key
