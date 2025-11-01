@@ -1,20 +1,18 @@
-
 /*
-  Gazetteer App - Responsive Layout Fix
+  Gazetteer App - Mobile Map Fix
   Author: Ernest Eboagwu
 */
 
-/* Base layout reset */
 html, body {
-  height: 100%;
+  height: 100dvh;
   margin: 0;
   padding: 0;
   overflow: hidden;
 }
 
-/* Map + panel structure */
+/* Container fills entire viewport minus navbar */
 main {
-  height: calc(100vh - 56px); /* minus navbar height */
+  height: calc(100dvh - 56px);
   overflow: hidden;
 }
 
@@ -22,7 +20,7 @@ main .row {
   height: 100%;
 }
 
-/* Side panel scrolls independently */
+/* Side panel scrolls */
 #sidePanel {
   height: 100%;
   overflow-y: auto;
@@ -30,22 +28,24 @@ main .row {
   border-right: 1px solid #dee2e6;
 }
 
-/* Map fills the available space */
+/* Map must fill available space */
 #map {
   width: 100%;
   height: 100%;
-  flex: 1;
-  min-height: 300px;
+  min-height: 60vh;
+  background: #f0f0f0;
 }
 
-/* Fix for iOS Safari’s dynamic viewport */
+/* Fix for iOS dynamic viewport */
 @supports (-webkit-touch-callout: none) {
-  #map {
+  html, body {
     height: -webkit-fill-available;
+  }
+  #map {
+    height: calc(-webkit-fill-available - 56px);
   }
 }
 
-/* Leaflet control spacing */
 .leaflet-top {
   margin-top: 65px;
 }
@@ -54,25 +54,21 @@ main .row {
   font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
 }
 
-/* Badge hover */
 .badge[title] {
   cursor: help;
 }
 
-/* 📱 Mobile Adjustments */
+/* Responsive mobile behavior */
 @media (max-width: 991px) {
   body {
     overflow: auto;
   }
-
   main {
     height: auto;
   }
-
   #sidePanel {
     max-height: 50vh;
   }
-
   #map {
     height: 50vh;
   }

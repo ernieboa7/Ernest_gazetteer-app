@@ -679,6 +679,18 @@
 
   /** Initialization **/
   map.setView([20, 0], 2);
+
+  // 🛠 Fix mobile blank map issue
+  setTimeout(() => {
+    map.invalidateSize(); // forces Leaflet to re-render tiles
+  }, 600);
+
+  window.addEventListener('resize', () => {
+    map.invalidateSize();
+  });
+
+
+
   renderHistory();
 
   /** Auto Load User Location **/
