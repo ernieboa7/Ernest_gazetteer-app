@@ -477,7 +477,7 @@
     };
   }
 
-  function updateCountryInfo(country) {
+  /*function updateCountryInfo(country) {
     const elCountry = document.getElementById('countryInfo');
     if (!elCountry) return;
     if (!country) { elCountry.innerHTML = '<em>No country info.</em>'; return; }
@@ -489,7 +489,40 @@
       <div><strong>Currency:</strong> ${country.currency}</div>
       <div><strong>Languages:</strong> ${country.languages}</div>
     `;
+  } */
+
+  // 🏳️ Update country info and auto-expand accordion
+  function updateCountryInfo(country) {
+    const elCountry = document.getElementById('countryInfo');
+    const collapseEl = document.getElementById('collapseCountry');
+    if (!elCountry) return;
+
+    if (!country) {
+      elCountry.innerHTML = '<em>No country info.</em>';
+      // collapse if no info
+      const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl);
+      collapse.hide();
+      return;
+    }
+
+    elCountry.innerHTML = `
+      <div class="text-center mb-2">
+        <img src="${country.flag}" alt="Flag" width="80" class="border rounded shadow-sm">
+      </div>
+      <div><strong>Country:</strong> ${country.name}</div>
+      <div><strong>Capital:</strong> ${country.capital}</div>
+      <div><strong>Population:</strong> ${country.population}</div>
+      <div><strong>Currency:</strong> ${country.currency}</div>
+      <div><strong>Languages:</strong> ${country.languages}</div>
+    `;
+
+    // ✅ Auto-expand the accordion panel
+    const collapse = bootstrap.Collapse.getOrCreateInstance(collapseEl, { toggle: false });
+    collapse.show();
   }
+
+
+  
 
   // 🌍 Handle Place Search
   async function handlePlaceSearch(query) {
