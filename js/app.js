@@ -491,7 +491,7 @@
     `;
   } */
 
-  // 🏳️ Update country info and auto-expand accordion
+  //  Update country info and auto-expand accordion
   function updateCountryInfo(country) {
     const elCountry = document.getElementById('countryInfo');
     const collapseEl = document.getElementById('collapseCountry');
