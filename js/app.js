@@ -183,8 +183,8 @@
     `;
   }
 
-  // 🌍 Handle Place Search
-  async function handlePlaceSearch(query) {
+  //  Handle Place Search
+  /*async function handlePlaceSearch(query) {
     try {
       if (!query) throw new Error('Please enter a place name.');
       showLoader(true);
@@ -220,9 +220,56 @@
     } finally {
       showLoader(false);
     }
-  }
+  } */
+  
+  // Handle Place Search
+async function handlePlaceSearch(query) {
+  try {
+    if (!query) throw new Error('Please enter a place name.');
+    showLoader(true);
 
-  // 📍 Handle Coordinate Search
+    const geo = await getJSON('./php/opencage.php', { q: query, limit: 1 });
+    const best = geo?.results?.[0];
+    if (!best) throw new Error('No results for that place.');
+
+    const lat = best.geometry.lat, lng = best.geometry.lng;
+    const displayName = best.formatted;
+    const countryCode =
+      best.components?.country_code?.toUpperCase?.() ||
+      best.components?.country?.toUpperCase?.(); //  Fixed fallback
+
+    console.log("Country code detected:", countryCode);
+
+    setMapView(lat, lng, displayName);
+    const nearby = await fetchNearby(lat, lng);
+    const tz = await fetchTimezone(lat, lng);
+    const weather = await fetchWeather(lat, lng);
+
+    updatePlaceInfo({ lat, lng, displayName, nearby, countryCode });
+    updateTimeInfo(tz);
+    updateWeatherInfo(weather);
+
+    //  Fetch and show country info
+    if (countryCode) {
+      const country = await fetchCountryInfo(countryCode);
+      updateCountryInfo(country);
+    } else {
+      updateCountryInfo(null);
+    }
+
+    saveHistory({ name: displayName, lat, lng });
+    notify('Location loaded.');
+  } catch (err) {
+    console.error(err);
+    notify(err.message || 'Search failed.');
+  } finally {
+    showLoader(false);
+  }
+}
+  
+
+
+  //  Handle Coordinate Search
   async function handleCoordSearch(lat, lng) {
     try {
       if (typeof lat === 'string') lat = parseFloat(lat);
@@ -250,7 +297,7 @@
     }
   }
 
-  // 🧭 Event Bindings
+  //  Event Bindings
   el.form.addEventListener('submit', (e) => { e.preventDefault(); handlePlaceSearch(el.placeInput.value.trim()); });
   el.btnSearchCoords.addEventListener('click', () => handleCoordSearch(el.latInput.value, el.lngInput.value));
   el.btnUseMyLocation.addEventListener('click', () => {
