@@ -1,16 +1,15 @@
-/*
-  Gazetteer App - Mobile Map Fix
-  Author: Ernest Eboagwu
+/* Gazetteer - Mobile Map Fix (Final)
+   Author: Ernest Eboagwu
 */
 
+/* Ensure full viewport height */
 html, body {
-  height: 100dvh;
+  height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
-/* Container fills entire viewport minus navbar */
+/* Main content fills remaining space below navbar */
 main {
   height: calc(100dvh - 56px);
   overflow: hidden;
@@ -20,7 +19,7 @@ main .row {
   height: 100%;
 }
 
-/* Side panel scrolls */
+/* Scrollable left panel */
 #sidePanel {
   height: 100%;
   overflow-y: auto;
@@ -28,44 +27,46 @@ main .row {
   border-right: 1px solid #dee2e6;
 }
 
-/* Map must fill available space */
+/* Map styling */
 #map {
   width: 100%;
   height: 100%;
   min-height: 60vh;
-  background: #f0f0f0;
+  background: #e8e8e8; /* fallback color */
+  position: relative;
+  z-index: 1;
 }
 
-/* Fix for iOS dynamic viewport */
+/* Fix for Safari dynamic height */
 @supports (-webkit-touch-callout: none) {
   html, body {
     height: -webkit-fill-available;
+  }
+  main {
+    height: calc(-webkit-fill-available - 56px);
   }
   #map {
     height: calc(-webkit-fill-available - 56px);
   }
 }
 
+/* Avoid leaflet controls overlapping navbar */
 .leaflet-top {
   margin-top: 65px;
 }
 
+/* Typography for map elements */
 .leaflet-container {
   font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
 }
 
+/* Cursor hint for user badge */
 .badge[title] {
   cursor: help;
 }
 
-/* Responsive mobile behavior */
+/* Responsive tweak for smaller screens */
 @media (max-width: 991px) {
-  body {
-    overflow: auto;
-  }
-  main {
-    height: auto;
-  }
   #sidePanel {
     max-height: 50vh;
   }

@@ -316,10 +316,19 @@
  */
 (() => {
   const map = L.map("map", { zoomControl: true });
-  const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  /*const osm = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: "&copy; OpenStreetMap contributors",
+  }).addTo(map); */
+
+  const osm = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap &copy; CARTO contributors'
   }).addTo(map);
+
+
+
+
 
   const el = {
     userBadge: document.getElementById("userLocationBadge"),
@@ -680,15 +689,20 @@
   /** Initialization **/
   map.setView([20, 0], 2);
 
-  // 🛠 Fix mobile blank map issue
+  // 🛠 Mobile Map Rendering Fix
   setTimeout(() => {
-    map.invalidateSize(); // forces Leaflet to re-render tiles
-  }, 600);
-
-  window.addEventListener('resize', () => {
     map.invalidateSize();
+    console.log('✅ Map resized after initial load');
+  }, 1000);
+
+  // Also fix when rotating or resizing the screen
+  window.addEventListener('resize', () => map.invalidateSize());
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => map.invalidateSize(), 500);
   });
 
+
+  
 
 
   renderHistory();
