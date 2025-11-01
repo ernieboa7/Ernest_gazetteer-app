@@ -420,11 +420,20 @@
     el.timeInfo.innerHTML = lines.join('');
   }
 
-  function setMapView(lat, lng, label) {
-    map.setView([lat, lng], 8);
+  
+
+  function setMapView(lat, lng, label, zoomOverride) {
+  // Default zoom: 8 for normal searches, 10 for "use my location"
+    const zoomLevel = zoomOverride ?? 8;
+
+    map.setView([lat, lng], zoomLevel);
     markers.clearLayers();
-    const m = L.marker([lat, lng]).addTo(markers);
-    if (label) m.bindPopup(label).openPopup();
+
+    const marker = L.marker([lat, lng]).addTo(markers);
+    if (label) marker.bindPopup(label).openPopup();
+
+    // Smooth recenter on mobile after slight delay
+    setTimeout(() => map.invalidateSize(), 250);
   }
 
   // API Fetch Helpers
@@ -633,7 +642,7 @@
   renderHistory();
 
   // Detect user location (badge only)
-  if (navigator.geolocation) {
+  /*if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude: lat, longitude: lng } = pos.coords;
       try {
@@ -646,5 +655,79 @@
     }, () => { el.userBadge.textContent = 'Location unavailable'; });
   } else {
     el.userBadge.textContent = 'Geolocation unsupported';
+  } */
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        try {
+          // 🔹 Zoom in closer for "use my location"
+          setMapView(lat, lng, 'Your location', 10);
+
+          // 🔹 Fetch info
+          const nearby = await fetchNearby(lat, lng);
+          const tz = await fetchTimezone(lat, lng);
+          const weather = await fetchWeather(lat, lng);
+
+          // Update panels
+          updatePlaceInfo({ lat, lng, nearby });
+          updateTimeInfo(tz);
+          updateWeatherInfo(weather);
+
+          // Try to fetch country info if available
+          const countryCode = nearby?.countryName
+            ? nearby.countryName.slice(0, 2).toUpperCase()
+            : null;
+          if (countryCode) {
+            const country = await fetchCountryInfo(countryCode);
+            updateCountryInfo(country);
+          }
+
+          // Update badge
+          el.userBadge.textContent = nearby?.countryName || 'Detected';
+          el.userBadge.title = nearby
+            ? `Nearest: ${nearby.name}, ${nearby.countryName}`
+            : 'Detected by geolocation';
+
+          // ✅ Auto-expand Weather + Country accordions for convenience
+          const weatherCollapse = document.querySelector('#collapseWeather');
+          const countryCollapse = document.querySelector('#collapseCountry');
+          if (weatherCollapse) new bootstrap.Collapse(weatherCollapse, { show: true });
+          if (countryCollapse) new bootstrap.Collapse(countryCollapse, { show: true });
+
+        } catch (err) {
+          console.error(err);
+          el.userBadge.textContent = 'Detected';
+          notify('Could not fetch full location details.');
+        }
+      },
+      () => {
+        el.userBadge.textContent = 'Location unavailable';
+        notify('Could not get your location.');
+      }
+    );
+  } else {
+    el.userBadge.textContent = 'Geolocation unsupported';
   }
+  
+
+
+  
+
+
+  // 📱 Auto-resize map on orientation change or resize
+  window.addEventListener('resize', () => {
+    map.invalidateSize();
+  });
+
+  // Fix delayed map load when mobile orientation changes or address bar shrinks
+  window.addEventListener('orientationchange', () => {
+    setTimeout(() => map.invalidateSize(), 400);
+  });
+
+
+
+
+
 })();
