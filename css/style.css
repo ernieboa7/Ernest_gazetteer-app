@@ -1,14 +1,58 @@
+/* 
+   Gazetteer App - Custom Styles
+   Author: Ernest Eboagwu
+   Project 1: Location Explorer SPA
+    */
+
+/* Ensure full height for map and document */
 html, body, #map {
   height: 100%;
 }
+
+/* Map should take at least 60% of viewport on small screens */
 #map {
   min-height: 60vh;
 }
+
+/* Scrollable sidebar panel */
 .panel-scroll {
-  height: calc(100vh - 56px);
+  height: calc(100vh - 56px); /* subtract navbar height */
   overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #999 #f5f5f5;
 }
+
+/* Custom scrollbar for WebKit browsers */
+.panel-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.panel-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+.panel-scroll::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Leaflet map font normalization */
 .leaflet-container {
   font: 12px/1.5 "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 }
-.badge[title] { cursor: help; }
+
+/* Badge cursor hint for detected location */
+.badge[title] {
+  cursor: help;
+}
+
+/* Responsive tweak: full-width panel on small screens */
+@media (max-width: 992px) {
+  #sidePanel {
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+  #map {
+    height: 60vh;
+  }
+}
