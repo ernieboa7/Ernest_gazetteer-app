@@ -238,7 +238,20 @@ async function handlePlaceSearch(query) {
       best.components?.country_code?.toUpperCase?.() ||
       best.components?.country?.toUpperCase?.(); //  Fixed fallback
 
-    console.log("Country code detected:", countryCode);
+    console.log("OpenCage components:", best.components);
+    console.log("Detected countryCode:", countryCode);
+
+    if (countryCode) {
+      const country = await fetchCountryInfo(countryCode);
+      updateCountryInfo(country);
+    }
+
+    console.log("Country API result:", country);
+
+
+
+
+    
 
     setMapView(lat, lng, displayName);
     const nearby = await fetchNearby(lat, lng);
