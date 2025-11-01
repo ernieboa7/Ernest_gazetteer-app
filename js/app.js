@@ -1,6 +1,6 @@
-/* Gazetteer SPA - Starter
+/* Gazetteer SPA - Final Version
  * Uses Bootstrap 5 + Leaflet
- * Proxies: php/opencage.php, php/geonames.php, php/weather.php
+ * Proxies: php/opencage.php, php/geonames.php, php/weather.php, php/restcountries.php
  */
 (() => {
   const map = L.map('map', { zoomControl: true });
@@ -30,9 +30,12 @@
   const toast = new bootstrap.Toast(el.toast);
   const markers = L.layerGroup().addTo(map);
 
-  function showLoader(show=true){ el.loader.classList.toggle('d-none', !show); }
-  function notify(msg){ el.toastBody.textContent = msg; toast.show(); }
-  function saveHistory(item){
+  // Loader + Notification
+  function showLoader(show = true) { el.loader.classList.toggle('d-none', !show); }
+  function notify(msg) { el.toastBody.textContent = msg; toast.show(); }
+
+  // Save search history (localStorage)
+  function saveHistory(item) {
     const key = 'gazetteer_history';
     const list = JSON.parse(localStorage.getItem(key) || '[]');
     list.unshift({ ...item, ts: Date.now() });
@@ -48,7 +51,8 @@
     localStorage.setItem(key, JSON.stringify(dedup));
     renderHistory();
   }
-  function renderHistory(){
+
+  function renderHistory() {
     const key = 'gazetteer_history';
     const list = JSON.parse(localStorage.getItem(key) || '[]');
     el.historyList.innerHTML = '';
@@ -64,16 +68,17 @@
     }
   }
 
-  // Generic GET helper using URLSearchParams
-  async function getJSON(url, params={}){
+  // Generic GET helper
+  async function getJSON(url, params = {}) {
     const u = new URL(url, window.location.origin);
-    Object.entries(params).forEach(([k,v]) => v !== undefined && v !== null && u.searchParams.append(k, v));
+    Object.entries(params).forEach(([k, v]) => v !== undefined && v !== null && u.searchParams.append(k, v));
     const res = await fetch(u.toString(), { headers: { 'Accept': 'application/json' } });
     if (!res.ok) throw new Error(`Request failed: ${res.status}`);
     return await res.json();
   }
 
-  function updatePlaceInfo(place){
+  // UI Update Helpers
+  function updatePlaceInfo(place) {
     if (!place) { el.placeInfo.innerHTML = '<em>No location selected.</em>'; return; }
     const nearbyCity = place.nearby?.name ? `${place.nearby.name}, ${place.nearby.countryName}` : '—';
     const lines = [
@@ -85,7 +90,7 @@
     el.placeInfo.innerHTML = lines.join('');
   }
 
-  function updateWeatherInfo(weather){
+  function updateWeatherInfo(weather) {
     if (!weather) { el.weatherInfo.innerHTML = '<em>No weather yet.</em>'; return; }
     const lines = [
       `<div><strong>Temperature:</strong> ${weather.temp}°C</div>`,
@@ -96,7 +101,7 @@
     el.weatherInfo.innerHTML = lines.join('');
   }
 
-  function updateTimeInfo(info){
+  function updateTimeInfo(info) {
     if (!info) { el.timeInfo.innerHTML = '<em>No time/zone yet.</em>'; return; }
     const dt = new Date(info.localTime);
     const lines = [
@@ -107,15 +112,15 @@
     el.timeInfo.innerHTML = lines.join('');
   }
 
-  function setMapView(lat, lng, label){
+  function setMapView(lat, lng, label) {
     map.setView([lat, lng], 8);
     markers.clearLayers();
     const m = L.marker([lat, lng]).addTo(markers);
     if (label) m.bindPopup(label).openPopup();
   }
 
-  async function fetchNearby(lat, lng){
-    // GeoNames: findNearbyPlaceNameJSON
+  // API Fetch Helpers
+  async function fetchNearby(lat, lng) {
     const nearby = await getJSON('./php/geonames.php', {
       endpoint: 'findNearbyPlaceNameJSON',
       lat, lng, radius: 20, cities: 'cities15000', style: 'full', maxRows: 1
@@ -130,129 +135,26 @@
     };
   }
 
-  async function fetchTimezone(lat, lng){
-    // GeoNames: timezoneJSON
-    const tz = await getJSON('./php/geonames.php', {
-      endpoint: 'timezoneJSON', lat, lng
-    });
+  async function fetchTimezone(lat, lng) {
+    const tz = await getJSON('./php/geonames.php', { endpoint: 'timezoneJSON', lat, lng });
     if (!tz || tz.status) return null;
-    return {
-      timezoneId: tz.timezoneId,
-      gmtOffset: tz.gmtOffset,
-      localTime: tz.time
-    };
+    return { timezoneId: tz.timezoneId, gmtOffset: tz.gmtOffset, localTime: tz.time };
   }
 
-  async function fetchWeather(lat, lng){
-    // OpenWeather Onecall (proxied) - using current weather
+  async function fetchWeather(lat, lng) {
     const w = await getJSON('./php/weather.php', { lat, lon: lng });
-    if (!w || w.cod) return null;
-    const cur = w.main || w.current || {};
-    const weather = (w.weather && w.weather[0]) || (w.current && w.current.weather && w.current.weather[0]) || {};
+    if (!w || w.cod !== 200) return null;
+    const cur = w.main || {};
+    const weather = w.weather && w.weather[0] ? w.weather[0] : {};
     return {
-      temp: cur.temp ?? (w.current?.temp ?? '—'),
-      humidity: cur.humidity ?? (w.current?.humidity ?? '—'),
+      temp: cur.temp ?? '—',
+      humidity: cur.humidity ?? '—',
       description: weather.description ?? '—',
-      wind: (w.wind && w.wind.speed) || (w.current && w.current.wind_speed) || null
+      wind: w.wind?.speed ?? null
     };
   }
 
-  async function handlePlaceSearch(query){
-    try {
-      if (!query) throw new Error('Please enter a place name.');
-      showLoader(true);
-      const geo = await getJSON('./php/opencage.php', { q: query, limit: 1 });
-      const best = geo?.results?.[0];
-      if (!best) throw new Error('No results for that place.');
-      const lat = best.geometry.lat, lng = best.geometry.lng;
-      const displayName = best.formatted;
-      setMapView(lat, lng, displayName);
-      const nearby = await fetchNearby(lat, lng);
-      const tz = await fetchTimezone(lat, lng);
-      const weather = await fetchWeather(lat, lng);
-      updatePlaceInfo({ lat, lng, displayName, nearby, countryCode: (best.components || {}).country_code?.toUpperCase?.() });
-      updateTimeInfo(tz);
-      updateWeatherInfo(weather);
-      saveHistory({ name: displayName, lat, lng });
-      notify('Location loaded.');
-    } catch (err) {
-      console.error(err);
-      notify(err.message || 'Search failed.');
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  async function handleCoordSearch(lat, lng){
-    try {
-      if (typeof lat === 'string') lat = parseFloat(lat);
-      if (typeof lng === 'string') lng = parseFloat(lng);
-      if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('Enter valid coordinates.');
-      showLoader(true);
-      setMapView(lat, lng, `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
-      const nearby = await fetchNearby(lat, lng);
-      const tz = await fetchTimezone(lat, lng);
-      const weather = await fetchWeather(lat, lng);
-      updatePlaceInfo({ lat, lng, nearby });
-      updateTimeInfo(tz);
-      updateWeatherInfo(weather);
-      saveHistory({ lat, lng });
-      notify('Coordinates loaded.');
-    } catch (err) {
-      console.error(err);
-      notify(err.message || 'Coordinate search failed.');
-    } finally {
-      showLoader(false);
-    }
-  }
-
-  // Events
-  el.form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    handlePlaceSearch(el.placeInput.value.trim());
-  });
-  el.btnSearchCoords.addEventListener('click', () => handleCoordSearch(el.latInput.value, el.lngInput.value));
-  el.btnUseMyLocation.addEventListener('click', () => {
-    if (!navigator.geolocation) { notify('Geolocation not supported.'); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => handleCoordSearch(pos.coords.latitude, pos.coords.longitude),
-      (err) => notify('Could not get your location.')
-    );
-  });
-  el.btnClear.addEventListener('click', () => {
-    el.placeInput.value = '';
-    el.latInput.value = '';
-    el.lngInput.value = '';
-    el.placeInfo.innerHTML = '<em>No location selected.</em>';
-    el.weatherInfo.innerHTML = '<em>No weather yet.</em>';
-    el.timeInfo.innerHTML = '<em>No time/zone yet.</em>';
-    markers.clearLayers();
-  });
-
-  // Start
-  map.setView([20,0], 2);
-  renderHistory();
-
-  // Try to detect user country with a lightweight GeoNames lookup using approximate IP-less method if geolocation succeeds.
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(async (pos) => {
-      const { latitude: lat, longitude: lng } = pos.coords;
-      try {
-        const nearby = await fetchNearby(lat, lng);
-        el.userBadge.textContent = nearby?.countryName || 'Detected';
-        el.userBadge.title = nearby ? `Nearest: ${nearby.name}, ${nearby.countryName}` : 'Detected by geolocation';
-      } catch {
-        el.userBadge.textContent = 'Detected';
-      }
-    }, () => {
-      el.userBadge.textContent = 'Location unavailable';
-    });
-  } else {
-    el.userBadge.textContent = 'Geolocation unsupported';
-  }
-
-  // Fetch REST Countries info
-  async function fetchCountryInfo(code){
+  async function fetchCountryInfo(code) {
     if (!code) return null;
     const res = await getJSON('./php/restcountries.php', { code });
     const data = Array.isArray(res) ? res[0] : res;
@@ -267,7 +169,7 @@
     };
   }
 
-  function updateCountryInfo(country){
+  function updateCountryInfo(country) {
     const elCountry = document.getElementById('countryInfo');
     if (!elCountry) return;
     if (!country) { elCountry.innerHTML = '<em>No country info.</em>'; return; }
@@ -280,5 +182,110 @@
       <div><strong>Languages:</strong> ${country.languages}</div>
     `;
   }
-    
+
+  // 🌍 Handle Place Search
+  async function handlePlaceSearch(query) {
+    try {
+      if (!query) throw new Error('Please enter a place name.');
+      showLoader(true);
+
+      const geo = await getJSON('./php/opencage.php', { q: query, limit: 1 });
+      const best = geo?.results?.[0];
+      if (!best) throw new Error('No results for that place.');
+
+      const lat = best.geometry.lat, lng = best.geometry.lng;
+      const displayName = best.formatted;
+      const countryCode = (best.components || {}).country_code?.toUpperCase?.();
+
+      setMapView(lat, lng, displayName);
+      const nearby = await fetchNearby(lat, lng);
+      const tz = await fetchTimezone(lat, lng);
+      const weather = await fetchWeather(lat, lng);
+
+      updatePlaceInfo({ lat, lng, displayName, nearby, countryCode });
+      updateTimeInfo(tz);
+      updateWeatherInfo(weather);
+
+      // ✅ NEW: Fetch and show country info
+      if (countryCode) {
+        const country = await fetchCountryInfo(countryCode);
+        updateCountryInfo(country);
+      }
+
+      saveHistory({ name: displayName, lat, lng });
+      notify('Location loaded.');
+    } catch (err) {
+      console.error(err);
+      notify(err.message || 'Search failed.');
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  // 📍 Handle Coordinate Search
+  async function handleCoordSearch(lat, lng) {
+    try {
+      if (typeof lat === 'string') lat = parseFloat(lat);
+      if (typeof lng === 'string') lng = parseFloat(lng);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('Enter valid coordinates.');
+
+      showLoader(true);
+      setMapView(lat, lng, `Lat: ${lat.toFixed(5)}, Lng: ${lng.toFixed(5)}`);
+
+      const nearby = await fetchNearby(lat, lng);
+      const tz = await fetchTimezone(lat, lng);
+      const weather = await fetchWeather(lat, lng);
+
+      updatePlaceInfo({ lat, lng, nearby });
+      updateTimeInfo(tz);
+      updateWeatherInfo(weather);
+
+      saveHistory({ lat, lng });
+      notify('Coordinates loaded.');
+    } catch (err) {
+      console.error(err);
+      notify(err.message || 'Coordinate search failed.');
+    } finally {
+      showLoader(false);
+    }
+  }
+
+  // 🧭 Event Bindings
+  el.form.addEventListener('submit', (e) => { e.preventDefault(); handlePlaceSearch(el.placeInput.value.trim()); });
+  el.btnSearchCoords.addEventListener('click', () => handleCoordSearch(el.latInput.value, el.lngInput.value));
+  el.btnUseMyLocation.addEventListener('click', () => {
+    if (!navigator.geolocation) return notify('Geolocation not supported.');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => handleCoordSearch(pos.coords.latitude, pos.coords.longitude),
+      () => notify('Could not get your location.')
+    );
+  });
+  el.btnClear.addEventListener('click', () => {
+    el.placeInput.value = el.latInput.value = el.lngInput.value = '';
+    el.placeInfo.innerHTML = '<em>No location selected.</em>';
+    el.weatherInfo.innerHTML = '<em>No weather yet.</em>';
+    el.timeInfo.innerHTML = '<em>No time/zone yet.</em>';
+    document.getElementById('countryInfo').innerHTML = '<em>No country info.</em>';
+    markers.clearLayers();
+  });
+
+  // Initialize
+  map.setView([20, 0], 2);
+  renderHistory();
+
+  // Detect user location
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude: lat, longitude: lng } = pos.coords;
+      try {
+        const nearby = await fetchNearby(lat, lng);
+        el.userBadge.textContent = nearby?.countryName || 'Detected';
+        el.userBadge.title = nearby ? `Nearest: ${nearby.name}, ${nearby.countryName}` : 'Detected by geolocation';
+      } catch {
+        el.userBadge.textContent = 'Detected';
+      }
+    }, () => { el.userBadge.textContent = 'Location unavailable'; });
+  } else {
+    el.userBadge.textContent = 'Geolocation unsupported';
+  }
 })();
