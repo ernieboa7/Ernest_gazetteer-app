@@ -1,9 +1,10 @@
+
 /*
-  Gazetteer App - Fixed Mobile Map Layout
+  Gazetteer App - Responsive Layout Fix
   Author: Ernest Eboagwu
 */
 
-/* Ensure full height for page */
+/* Base layout reset */
 html, body {
   height: 100%;
   margin: 0;
@@ -11,54 +12,68 @@ html, body {
   overflow: hidden;
 }
 
-/* Map section must fill remaining viewport height */
-#map {
-  width: 100%;
-  height: 100vh;
-  min-height: 60vh;
-  flex: 1;
+/* Map + panel structure */
+main {
+  height: calc(100vh - 56px); /* minus navbar height */
+  overflow: hidden;
 }
 
-/* Handle iOS Safari's dynamic viewport */
+main .row {
+  height: 100%;
+}
+
+/* Side panel scrolls independently */
+#sidePanel {
+  height: 100%;
+  overflow-y: auto;
+  background: #fff;
+  border-right: 1px solid #dee2e6;
+}
+
+/* Map fills the available space */
+#map {
+  width: 100%;
+  height: 100%;
+  flex: 1;
+  min-height: 300px;
+}
+
+/* Fix for iOS Safari’s dynamic viewport */
 @supports (-webkit-touch-callout: none) {
   #map {
     height: -webkit-fill-available;
   }
 }
 
-/* Fix the main layout: make row fill screen */
-main .row {
-  height: calc(100vh - 56px); /* subtract navbar height */
-  overflow: hidden;
-}
-
-/* Side panel scrollable independently */
-#sidePanel {
-  max-height: calc(100vh - 56px);
-  overflow-y: auto;
-}
-
-/* Styling for Leaflet content */
-.leaflet-container {
-  font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
-}
-
-/* Small visual tweaks */
-.badge[title] {
-  cursor: help;
-}
-
-/* Prevent leaflet zoom controls overlapping navbar */
+/* Leaflet control spacing */
 .leaflet-top {
   margin-top: 65px;
 }
 
-/* Ensure mobile panels and map are readable */
-@media (max-width: 768px) {
-  #sidePanel {
-    max-height: 40vh;
+.leaflet-container {
+  font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
+}
+
+/* Badge hover */
+.badge[title] {
+  cursor: help;
+}
+
+/* 📱 Mobile Adjustments */
+@media (max-width: 991px) {
+  body {
+    overflow: auto;
   }
+
+  main {
+    height: auto;
+  }
+
+  #sidePanel {
+    max-height: 50vh;
+  }
+
   #map {
-    min-height: 60vh;
+    height: 50vh;
   }
 }
