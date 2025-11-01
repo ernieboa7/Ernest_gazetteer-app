@@ -1,44 +1,64 @@
-/* 
-   Gazetteer App - Custom Styles
-   Author: Ernest Eboagwu
-   Project 1: Location Explorer SPA
-    */
+/*
+  Gazetteer App - Fixed Mobile Map Layout
+  Author: Ernest Eboagwu
+*/
 
-/* Ensure full height for map and document */
+/* Ensure full height for page */
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
 }
 
+/* Map section must fill remaining viewport height */
 #map {
-  position: relative;
   width: 100%;
-  height: 100%;
-  min-height: 60vh; /* ensures visibility on mobile */
+  height: 100vh;
+  min-height: 60vh;
+  flex: 1;
 }
 
-/* For devices with tall navbars or address bars */
+/* Handle iOS Safari's dynamic viewport */
 @supports (-webkit-touch-callout: none) {
   #map {
-    height: calc(100vh - 60px);
+    height: -webkit-fill-available;
   }
 }
 
-.panel-scroll {
-  height: calc(100vh - 56px);
+/* Fix the main layout: make row fill screen */
+main .row {
+  height: calc(100vh - 56px); /* subtract navbar height */
+  overflow: hidden;
+}
+
+/* Side panel scrollable independently */
+#sidePanel {
+  max-height: calc(100vh - 56px);
   overflow-y: auto;
 }
 
+/* Styling for Leaflet content */
 .leaflet-container {
-  font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
 }
 
+/* Small visual tweaks */
 .badge[title] {
   cursor: help;
 }
 
-/* Fix leaflet controls overlapping navbar on small screens */
+/* Prevent leaflet zoom controls overlapping navbar */
 .leaflet-top {
   margin-top: 65px;
+}
+
+/* Ensure mobile panels and map are readable */
+@media (max-width: 768px) {
+  #sidePanel {
+    max-height: 40vh;
+  }
+  #map {
+    min-height: 60vh;
+  }
 }
