@@ -10,6 +10,7 @@ html, body {
 }
 
 /* Main content fills remaining space below navbar */
+#map { background: red !important; }
 #map {
   width: 100%;
   height: 60vh;
