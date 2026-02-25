@@ -2,22 +2,22 @@
    Author: Ernest Eboagwu
 */
 
-/* Ensure full viewport height */
+/* Ensure full viewport height 
 html, body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-/* Main content fills remaining space below navbar */
+/* Main content fills remaining space below navbar 
 #map { background: red !important; }
-#map {
+/*#map {
   width: 100%;
   height: 60vh;
   min-height: 400px;
-}
+} */
 
-/* Scrollable left panel */
+/* Scrollable left panel 
 #sidePanel {
   height: 100%;
   overflow-y: auto;
@@ -34,12 +34,12 @@ html, body {
   position: relative;
   z-index: 1;
 }
-  */
+  
 
 
 #map {
   width: 100%;
-  height: 400px !important;   /* 👈 force visible height */
+  height: 400px !important;   /*  force visible height 
   background: repeating-linear-gradient(
     45deg,
     #ccc,
@@ -51,7 +51,7 @@ html, body {
 }
 
 
-/* Fix for Safari dynamic height */
+/* Fix for Safari dynamic height 
 @supports (-webkit-touch-callout: none) {
   html, body {
     height: -webkit-fill-available;
@@ -64,22 +64,22 @@ html, body {
   }
 }
 
-/* Avoid leaflet controls overlapping navbar */
+/* Avoid leaflet controls overlapping navbar 
 .leaflet-top {
   margin-top: 65px;
 }
 
-/* Typography for map elements */
+/* Typography for map elements 
 .leaflet-container {
   font: 12px/1.5 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
 }
 
-/* Cursor hint for user badge */
+/* Cursor hint for user badge 
 .badge[title] {
   cursor: help;
 }
 
-/* Responsive tweak for smaller screens */
+/* Responsive tweak for smaller screens 
 @media (max-width: 991px) {
   #sidePanel {
     max-height: 50vh;
@@ -87,4 +87,16 @@ html, body {
   #map {
     height: 50vh;
   }
+}
+*/
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+#map {
+  width: 100%;
+  height: 70vh;
+  min-height: 400px;
 }
